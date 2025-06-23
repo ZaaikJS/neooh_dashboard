@@ -1,103 +1,107 @@
-import Image from "next/image";
+'use client'
+import { useEffect, useState } from 'react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
+import PhaseTime from './components/PhaseTime';
+import Loading from './components/Loading';
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [phases, setPhases] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  useEffect(() => {
+    async function fetchPipeData() {
+      const query = `
+        query {
+          pipe(id: 304134796) {
+            phases {
+              name
+              cards_count
+            }
+          }
+        }
+      `;
+
+      try {
+        const response = await fetch('https://api.pipefy.com/graphql', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJQaXBlZnkiLCJpYXQiOjE3NDkxMzg2NTksImp0aSI6ImNlZDIyYjkwLTQ3MWQtNDgxYi1iMGJhLTk3NWE3YmU3YWI0OSIsInN1YiI6MzAzMjE1OTExLCJ1c2VyIjp7ImlkIjozMDMyMTU5MTEsImVtYWlsIjoiaGFycmlzb24udmlhbmFAbmVvb2guY29tLmJyIn19.kaHda8uV0esRE2ZU80Y5SaJdguOGZWHGiIxJ_Qvy45TkXEKBWZ8xaPnn807sL7J6oADVc4ngfy-9mzIouW6rQA',
+          },
+          body: JSON.stringify({ query }),
+        });
+
+        const result = await response.json();
+
+        if (result.errors) {
+          throw new Error(result.errors[0].message);
+        }
+
+        setPhases(result.data.pipe.phases);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchPipeData();
+  }, []);
+
+  if (loading) return <div className='h-screen w-full flex justify-center items-center'><Loading /></div>;
+  if (error) return <div>Erro: {error}</div>;
+
+  const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#0088FE'];
+
+  const data = phases
+    .filter((phase: any) => phase.name !== 'CONCLUÍDO' && phase.cards_count > 0)
+    .map((phase: any) => ({ name: phase.name, value: phase.cards_count }));
+
+  const legendData = phases
+    .filter((phase: any) => phase.name !== 'CONCLUÍDO')
+    .map((phase: any) => ({ name: phase.name, value: phase.cards_count }));
+
+  return (
+    <>
+      <div className="p-8 flex flex-col gap-8 h-screen">
+        <div className='flex'>
+          <div className="bg-white rounded-lg shadow-xl w-1/2">
+            <p className='text-center text-2xl font-semibold text-neutral-950 mt-10'>Porcentagem de cards por fase</p>
+            <ResponsiveContainer width="100%" height={400}>
+              <PieChart>
+                <Pie
+                  data={data}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={120}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {data.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="ml-8 flex flex-col justify-center bg-white rounded-xl shadow-lg p-8 w-1/2">
+            {legendData.map((entry, index) => (
+              <div key={`legend-${index}`} className="flex items-center mb-2">
+                <div
+                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                  className="w-4 h-4 mr-2"
+                />
+                <span><span className='font-semibold'>{entry.name}:</span> {entry.value} cards</span>
+              </div>
+            ))}
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        <PhaseTime />
+      </div>
+    </>
   );
 }
