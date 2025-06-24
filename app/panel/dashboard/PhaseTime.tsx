@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react';
-import Loading from './Loading';
+import Loading from '../../components/Loading';
 
 interface PhaseTime {
     phaseName: string;
