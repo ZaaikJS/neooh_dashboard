@@ -1,6 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react';
-import Loading from '../../components/Loading';
+import Loading from '../components/Loading';
 
 interface PhaseTime {
     phaseName: string;
@@ -51,7 +51,9 @@ export default function PhaseTime() {
                 if (result.errors) throw new Error(result.errors[0].message);
 
                 const phases = result.data.pipe.phases;
-                const calculatedPhaseTimes = phases.map((phase: any) => {
+                const calculatedPhaseTimes = phases
+                    .filter((phase: any) => phase.name !== 'CONCLUÍDO')
+                    .map((phase: any) => {
                     const durations = phase.cards.edges
                         .flatMap((edge: any) => edge.node.phases_history)
                         .filter((history: any) => history.phase.name === phase.name)

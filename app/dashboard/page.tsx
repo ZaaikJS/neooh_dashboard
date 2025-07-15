@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import PhaseTime from '@/app/panel/dashboard/PhaseTime';
+import PhaseTime from '@/app/dashboard/PhaseTime';
 import Loading from '@/app/components/Loading';
 
 export default function Dashboard() {

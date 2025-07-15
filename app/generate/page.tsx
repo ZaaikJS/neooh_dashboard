@@ -1,6 +1,7 @@
 'use client'
 import React, { useState } from "react";
 import { IoIosAddCircle } from "react-icons/io";
+import toast from "react-hot-toast";
 
 export default function Generate() {
     const [formData, setFormData] = useState({
@@ -76,6 +77,13 @@ export default function Generate() {
         );
     };
 
+    const generateRat = () => {
+        toast.error('Ocorreu um erro na geração da RAT.', {
+            duration: 4000,
+            style: { background: '#d32f2f', color: '#fff' }
+        });
+    }
+
     return (
         <div className="container mx-auto p-8 m-8 mt-28 bg-white shadow-lg shadow-black/40">
             <p className="text-xl font-semibold">Gerador de RAT/Relatório</p>
@@ -115,6 +123,12 @@ export default function Generate() {
                         </div>
                     </div>
                 </div>
+                <button
+                    className={"col-span-2 w-fit mx-auto bg-green-600 px-8 py-4 text-white hover:bg-green-700 cursor-pointer active:bg-green-600"}
+                    onClick={() => generateRat()}
+                >
+                    Gerar RAT
+                </button>
             </div>
         </div>
     );
