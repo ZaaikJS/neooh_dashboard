@@ -35,7 +35,7 @@ export default function Panel() {
                         Por favor, identifique-se
                     </p>
                     <div
-                        className="px-6 py-2 flex items-center gap-4 bg-white border-2 border-gray-300 rounded-full shadow-lg shadow-black/20 hover:shadow-xl duration-200 cursor-pointer"
+                        className="px-6 py-2 flex items-center gap-4 bg-white border-2 border-gray-300 shadow-lg shadow-black/20 hover:shadow-xl duration-200 cursor-pointer"
                         onClick={handleGoogle}
                     >
                         <Image src={googleLogo} alt="Google" height={30} />
