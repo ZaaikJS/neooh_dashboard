@@ -2,16 +2,47 @@
 
 import Link from 'next/link';
 import Image from "next/image";
-import {useSession, signOut, signIn} from "next-auth/react";
-import dashboard from '@/assets/images/dashboard.jpg'
-import rat from '@/assets/images/rat.jpg'
-import cards from '@/assets/images/cards.png'
+import { useSession, signOut, signIn } from "next-auth/react";
+import dashboard from '@/assets/images/dashboard.jpg';
+import rat from '@/assets/images/rat.jpg';
+import cards from '@/assets/images/cards.png';
 import googleLogo from "@/assets/images/Google__G__logo.png";
-import React, {useEffect} from "react";
+import React from "react";
 import Loading from "@/app/components/Loading";
+import { toast } from "react-hot-toast";
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 export default function Panel() {
     const { data: session, status } = useSession();
+
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+    const shownRef = React.useRef(false);
+
+    React.useEffect(() => {
+        const code = searchParams.get('error');
+        if (!code || shownRef.current) return;
+
+        const messages: Record<string, string> = {
+            OrganizationOnly: 'Usuário não faz parte da organização.',
+            AccessDenied: 'Acesso negado.',
+            Default: 'Falha na autenticação.'
+        };
+
+        const message = messages[code] ?? messages.Default;
+
+        toast.error(message, {
+            duration: 4000,
+            style: { background: '#d32f2f', color: '#fff' }
+        });
+
+        const sp = new URLSearchParams(searchParams.toString());
+        sp.delete('error');
+        router.replace(sp.toString() ? `${pathname}?${sp}` : pathname, { scroll: false });
+
+        shownRef.current = true;
+    }, [searchParams, router, pathname]);
 
     if (status === "loading") {
         return (
@@ -22,10 +53,8 @@ export default function Panel() {
     }
 
     if (!session) {
-        const handleGoogle = () => {
-            signIn("google", { callbackUrl: "/" }).catch((err) => {
-                console.error("Erro ao fazer login com Google:", err);
-            });
+        const handleGoogle = async () => {
+            await signIn("google", { callbackUrl: "/" });
         };
 
         return (
@@ -35,7 +64,7 @@ export default function Panel() {
                         Por favor, identifique-se
                     </p>
                     <div
-                        className="px-6 py-2 flex items-center gap-4 bg-white border-2 border-gray-300 shadow-lg shadow-black/20 hover:shadow-xl duration-200 cursor-pointer"
+                        className="px-6 py-2 flex items-center gap-4 bg-white border-2 border-gray-300 rounded-full shadow-lg shadow-black/20 hover:shadow-xl duration-200 cursor-pointer"
                         onClick={handleGoogle}
                     >
                         <Image src={googleLogo} alt="Google" height={30} />
@@ -72,30 +101,6 @@ export default function Panel() {
                     <div className="flex flex-col">
                         <p className="font-bold">Dashboard</p>
                         <span className="text-xs">Monitore em tempo real as métricas do Pipefy</span>
-                    </div>
-                </Link>
-                <Link
-                    href={'/generate'}
-                    className="p-4 flex flex-col gap-4 group bg-white border border-gray-200 shadow-lg hover:shadow-xl hover:shadow-black/20 duration-200 cursor-pointer"
-                >
-                    <div className="w-fit h-52 overflow-hidden">
-                        <Image src={rat} alt={"Gerador de RAT"} className="group-hover:scale-110 duration-400" />
-                    </div>
-                    <div className="flex flex-col">
-                        <p className="font-bold">Gerador de RAT/Relatório</p>
-                        <span className="text-xs">Gere RATs e relatórios ao mesmo tempo</span>
-                    </div>
-                </Link>
-                <Link
-                    href={'/cards'}
-                    className="p-4 flex flex-col gap-4 group bg-white border border-gray-200 shadow-lg hover:shadow-xl hover:shadow-black/20 duration-200 cursor-pointer"
-                >
-                    <div className="w-fit h-52 overflow-hidden">
-                        <Image src={cards} alt={"Lista de cards"} className="group-hover:scale-110 duration-400" />
-                    </div>
-                    <div className="flex flex-col">
-                        <p className="font-bold">Cards</p>
-                        <span className="text-xs">Visualize os cards em aberto</span>
                     </div>
                 </Link>
             </div>

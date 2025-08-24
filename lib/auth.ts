@@ -23,8 +23,16 @@ export const authOptions: NextAuthOptions = {
     pages: {
         signIn: '/',
         signOut: '/',
+        error: '/', // você pode customizar uma página de erro se quiser
     },
     callbacks: {
+        async signIn({ user }) {
+            const ok = user?.email?.toLowerCase().endsWith('@neooh.com.br');
+            if (!ok) {
+                return '/?error=OrganizationOnly';
+            }
+            return true;
+        },
         async jwt({ token, user }) {
             if (user) {
                 token.name = user.name;
